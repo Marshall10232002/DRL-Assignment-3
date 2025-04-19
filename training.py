@@ -29,7 +29,7 @@ from nes_py.wrappers import JoypadSpace
 
 # Set to True to load saved weights and continue training;
 # set to False to train from scratch.
-resume_training = False
+resume_training = True
 
 # ------------------ Environment Wrappers ------------------
 
@@ -261,7 +261,7 @@ def main():
     score_history   = []
     start_time      = time.perf_counter()
 
-    for episode in range(10000):
+    for episode in range(6000):
         state       = preprocess_state(env.reset())
         done        = False
         stuck_steps = 0

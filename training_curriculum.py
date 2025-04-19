@@ -26,7 +26,7 @@ from nes_py.wrappers import JoypadSpace
 
 # ------------------ Configuration ------------------
 
-resume_training = False
+resume_training = True
 episodes_per_level = 3000
 random_episodes    = 5000
 
@@ -264,8 +264,8 @@ def main():
     beta_start, beta_end = 0.4, 1
     beta_inc_episodes    = int(0.1 * total_curr)
     discount_factor = 0.99
-    batch_sz        = 256
-    buffer_capacity = 50000
+    batch_sz        = 512
+    buffer_capacity = 100000
     epsilon_start   = 1
     epsilon_end     = 0.001
     decay_rate      = 0.97
@@ -298,6 +298,7 @@ def main():
         stuck_steps = 0
         prev_x      = 0
         step_thresh = 150
+        end_game_thresh = 300
 
         while not done:
             if epsilon > random.random():
@@ -311,12 +312,18 @@ def main():
             delta_x = cur_x - prev_x
             prev_x  = cur_x
 
-            if delta_x <= 0:
+            if delta_x <= 5:
                 stuck_steps += 1
             else:
                 stuck_steps = 0
             if stuck_steps >= step_thresh:
                 reward_raw += -0.1
+            if stuck_steps >= end_game_thresh:
+                reward_raw -= 5
+                done = True
+            if delta_x > 0:
+                speed_bonus = 0.01 * delta_x
+                reward_raw += speed_bonus
 
             next_state = preprocess_state(raw_next)
             shaped_r   = np.sign(reward_raw) * (np.sqrt(abs(reward_raw) + 1) - 1) + 0.001 * reward_raw
