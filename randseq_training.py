@@ -335,7 +335,7 @@ def main():
             avg_loss  = loss_accum   / log_interval
             print(f"{device} | Ep {episode} | Avg Score {avg_score:.2f} | Avg Loss {avg_loss:.2f} | Level {lvl} | Time {elapsed:.1f}s")
             score_history.append(avg_score)
-            pickle.dump(score_history, open("score.p", "wb"))
+            pickle.dump(score_history, open("score_randseq.p", "wb"))
             reward_accum = 0.0
             loss_accum   = 0.0
             start_time   = time.perf_counter()
