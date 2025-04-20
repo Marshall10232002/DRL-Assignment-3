@@ -90,10 +90,7 @@ class Agent:
         # forward pass
         with torch.no_grad():
             q = self.net(state_t)
-            if random.random() < epsilon:
-                action = random.randrange(q.size(1))
-            else:
-                action = int(q.argmax(dim=1).item())
+            action = int(q.argmax(dim=1).item())
 
         # save and reset skip buffer
         self.last_action = action
