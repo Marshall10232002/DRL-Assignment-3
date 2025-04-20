@@ -6,6 +6,7 @@ import cv2
 from collections import deque
 import gym
 from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
+import random
 
 class DuelingDQN(nn.Module):
     def __init__(self, in_channels, n_actions):
@@ -75,5 +76,7 @@ class Agent(object):
         with torch.no_grad():
             q = self.net(state_t)
             action = int(q.argmax(dim=1).item())
+            if 0.001 > random.random():
+                action = 2
 
         return action
