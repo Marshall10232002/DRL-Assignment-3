@@ -37,7 +37,7 @@ class DuelingDQN(nn.Module):
         return val + (adv - adv.mean(dim=1, keepdim=True))
 
 class Agent:
-    def __init__(self, model_path="mario_q_randseq.pth", skip=4):
+    def __init__(self, model_path="mario_q.pth", skip=4):
         # device and network setup
         self.device = torch.device('cpu')
         self.net = DuelingDQN().to(self.device)
