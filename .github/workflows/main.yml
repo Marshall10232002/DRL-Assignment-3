@@ -27,6 +27,7 @@ jobs:
       run: |
         pip install gym
         pip install -r requirements.txt
+        pip install gdown
     
     - name: 2-1. Installing net work
       run: |
