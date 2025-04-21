@@ -31,7 +31,7 @@ jobs:
     
     - name: 2-1. Installing net work
       run: |
-        gdown --fuzzy 'https://drive.google.com/file/d/1yoOPmYpCMcY8nPTOsuyhyVv3wZBLK59y/view?usp=sharing'
+        gdown --fuzzy 'https://drive.google.com/file/d/19Rf3dPJ5NQhOFxyVTtFRqFpVffyTldRO/view?usp=share_link'
 
     - name: 3. Ensure env.so is executable
       run: chmod +x eval.cpython-38-x86_64-linux-gnu.so
