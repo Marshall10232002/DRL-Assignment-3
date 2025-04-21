@@ -83,6 +83,7 @@ class DuelingDQN(nn.Module):
 # ——————— Agent for evaluation ———————
 class Agent:
     def __init__(self):
+        # load network
         self.device = torch.device('cpu')
         self.net = DuelingDQN(4, len(COMPLEX_MOVEMENT)).to(self.device)
         self.net.load_state_dict(
@@ -90,36 +91,62 @@ class Agent:
         )
         self.net.eval()
 
-        self.skip_buffer  = deque(maxlen=4)
-        self.frame_stack  = deque(maxlen=4)
-        self.last_action  = 0
+        # frame‑skip & pooling (RepeatAndMaxEnv)
+        self.skip        = 4
+        self._skip_count = 0
+        self.pool_buf    = deque(maxlen=2)
+
+        # frame‑stack (ObservationStack)
+        self.stack_buf   = deque(maxlen=4)
+
+        # last action (for returning during skips)
+        self.last_action = 0
+
+    def reset(self):
+        """Call this once right after env.reset() on each episode."""
+        self._skip_count = 0
+        self.pool_buf.clear()
+        self.stack_buf.clear()
+        self.last_action = 0
 
     def act(self, obs):
-        # 1) frame‐skip pooling (repeat=4)
-        self.skip_buffer.append(obs)
-        if len(self.skip_buffer) < 4:
-            return self.last_action
-        f1, f2 = self.skip_buffer[-2], self.skip_buffer[-1]
-        max_frame = np.maximum(f1, f2)
+        """
+        obs: raw RGB frame from env.step or env.reset
+        returns: int action (0..len(COMPLEX_MOVEMENT)-1)
+        """
+        # 1) accumulate into 2‑frame pool
+        self.pool_buf.append(obs)
 
-        # 2) preprocess: gray → resize → normalize
-        gray    = cv2.cvtColor(max_frame, cv2.COLOR_RGB2GRAY)
-        resized = cv2.resize(gray, (84, 84), interpolation=cv2.INTER_AREA)
-        proc    = resized.astype(np.float32) / 255.0
+        # 2) on every 4th frame, compute a new action; else repeat
+        action = self.last_action
+        if self._skip_count % self.skip == 0:
+            # max‑pool the last two frames (or use current if only 1)
+            if len(self.pool_buf) == 2:
+                f1, f2 = self.pool_buf[0], self.pool_buf[1]
+                frame = np.maximum(f1, f2)
+            else:
+                frame = obs
 
-        # 3) stack into 4‐frame state
-        self.frame_stack.append(proc)
-        while len(self.frame_stack) < 4:
-            self.frame_stack.append(proc)
-        state = np.stack(self.frame_stack, axis=0)[None, ...]
-        state_t = torch.from_numpy(state).to(self.device)
+            # grayscale → resize → normalize
+            gray    = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            resized = cv2.resize(gray, (84,84), interpolation=cv2.INTER_AREA)
+            proc    = resized.astype(np.float32) / 255.0
 
-        # 4) noisy‐net forward
-        self.net.reset_noise()
-        with torch.no_grad():
-            q = self.net(state_t)
+            # add to 4‑frame stack
+            self.stack_buf.append(proc)
+            while len(self.stack_buf) < 4:
+                # pad on first few steps
+                self.stack_buf.append(proc)
+
+            state = np.stack(self.stack_buf, axis=0)[None,...]        # shape [1,4,84,84]
+            state_t = torch.from_numpy(state).to(self.device)
+
+            # deterministic evaluation: do NOT reset noise here
+            with torch.no_grad():
+                q = self.net(state_t)
             action = int(q.argmax(dim=1).item())
+            self.last_action = action
 
-        self.last_action = action
-        self.skip_buffer.clear()
+        # 3) increment skip counter
+        self._skip_count += 1
         return action
