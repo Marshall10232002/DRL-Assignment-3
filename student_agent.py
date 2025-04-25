@@ -112,18 +112,18 @@ class Agent:
         # stack_buf stores processed 84x84 uint8 frames
         self.stack_buf = deque(maxlen=4)
         self.last_act = 0 # Store the last action taken by the agent network
-        # Random initial skip logic (handled manually in evaluation agent)(0 for github)
-        self.rand = 4
-        self.randskip = 0
+        # Initial Frame skipping for frame stacking
+        self.frame_skip = 4
+        self.frame_skip_ct = 0
         
 
     def act(self, obs):
         # Add current raw frame to max-pool buffer
         self.pool_buf.append(obs)
 
-        # Handle random initial skip (returns last_act without processing/network)
-        if self.randskip < self.rand:
-            self.randskip += 1
+        # Handle initial frame skip (for the first four frame stack)
+        if self.frame_skip_ct < self.frame_skip:
+            self.frame_skip_ct += 1
             # Process and stack the frame even during no-ops
             frame = np.maximum(self.pool_buf[-2], self.pool_buf[-1]) if len(self.pool_buf) == 2 else obs
             gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
@@ -131,7 +131,7 @@ class Agent:
             proc = small.astype(np.uint8)
             self.stack_buf.append(proc)
             while len(self.stack_buf) < 4: self.stack_buf.append(proc) # Pad
-            return self.last_act # Returns the repeated action
+            return self.last_act # Returns the repeated action (should be nothing)
 
         # Handle frame skipping
         self.skip_ctr += 1 # <--- Increments counter for *this* raw frame
