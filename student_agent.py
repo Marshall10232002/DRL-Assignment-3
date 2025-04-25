@@ -112,9 +112,12 @@ class Agent:
         # stack_buf stores processed 84x84 uint8 frames
         self.stack_buf = deque(maxlen=4)
         self.last_act = 0 # Store the last action taken by the agent network
-        # Random initial skip logic (handled manually in evaluation agent)
+        # Random initial skip logic (handled manually in evaluation agent)(0 for github)
         self.rand = 0
         self.randskip = 0
+        self.exp = 3600
+        self.exp_ct = 0
+        
 
     def act(self, obs):
         # Add current raw frame to max-pool buffer
@@ -134,6 +137,7 @@ class Agent:
 
         # Handle frame skipping
         self.skip_ctr += 1 # <--- Increments counter for *this* raw frame
+        self.exp_ct += 1
         # Not yet time to take a new action → repeat last action
         if self.skip_ctr < self.skip: # <--- If not 4 raw frames yet
             # Process and stack the frame even during skip steps
@@ -168,7 +172,10 @@ class Agent:
         # Forward pass (net.eval() ensures no noise and uses mean weights)
         with torch.no_grad():
             q = self.net(state)
-
+        if self.exp_ct > self.exp:
+            if random.random() < 0.01:
+                self.last_act = random.randint(0,11)
+                return self.last_act
         self.last_act = int(q.argmax(1).item()) # <--- Selects a *new* action
         return self.last_act # Returns the newly selected action
 
