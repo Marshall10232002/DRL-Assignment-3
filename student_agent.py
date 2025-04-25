@@ -121,7 +121,7 @@ class Agent:
         # Add current raw frame to max-pool buffer
         self.pool_buf.append(obs)
 
-        # Handle initial frame skip (for the first four frame stack)
+        # Handle initial frame skip (for the first input of frame stack)
         if self.frame_skip_ct < self.frame_skip:
             self.frame_skip_ct += 1
             # Process and stack the frame even during no-ops
