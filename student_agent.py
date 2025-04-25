@@ -113,7 +113,7 @@ class Agent:
         self.stack_buf = deque(maxlen=4)
         self.last_act = 0 # Store the last action taken by the agent network
         # Random initial skip logic (handled manually in evaluation agent)(0 for github)
-        self.rand = 0
+        self.rand = 4
         self.randskip = 0
         
 
